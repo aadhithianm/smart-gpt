@@ -1,0 +1,106 @@
+{
+  "nodes": [
+    {
+      "id": "readme_react_vite_template",
+      "label": "React + Vite Template",
+      "file_type": "document",
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "source_url": null,
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_vite_plugin_react",
+      "label": "@vitejs/plugin-react",
+      "file_type": "concept",
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "source_url": "https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_vite_plugin_react_swc",
+      "label": "@vitejs/plugin-react-swc",
+      "file_type": "concept",
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "source_url": "https://github.com/vitejs/vite-plugin-react-swc/blob/main/packages/plugin-react-swc",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_react_compiler",
+      "label": "React Compiler",
+      "file_type": "concept",
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "source_url": "https://react.dev/learn/react-compiler/installation",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    },
+    {
+      "id": "readme_typescript_eslint",
+      "label": "typescript-eslint",
+      "file_type": "concept",
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "source_url": "https://typescript-eslint.io",
+      "captured_at": null,
+      "author": null,
+      "contributor": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "readme_react_vite_template",
+      "target": "readme_vite_plugin_react",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_react_vite_template",
+      "target": "readme_vite_plugin_react_swc",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_react_vite_template",
+      "target": "readme_react_compiler",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "weight": 1.0
+    },
+    {
+      "source": "readme_react_vite_template",
+      "target": "readme_typescript_eslint",
+      "relation": "references",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "A:/Projects/study-gpt/frontend/README.md",
+      "source_location": null,
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 601,
+  "output_tokens": 1059,
+  "model": "gemini-3.5-flash",
+  "finish_reason": "stop"
+}
