@@ -1,0 +1,48 @@
+# Git
+.git/
+
+# Node/JS dependencies and builds
+node_modules/
+dist/
+dist-ssr/
+
+# Python virtual envs and compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Environment files and credentials (to avoid indexing secrets)
+.env
+.env.local
+.env.*
+*.pem
+*.key
+
+# Graphify Output
+graphify-out/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# Temporary files and caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipydb/
+*.log
+logs/
+tmp/
+temp/
