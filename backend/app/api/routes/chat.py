@@ -176,8 +176,7 @@ async def chat_query_endpoint(
         AIService.generate_chat_stream(
             session_id=payload.session_id,
             user_query=payload.content,
-            workspace_id=session.workspace_id,
-            db=db
+            workspace_id=session.workspace_id
         ),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"}

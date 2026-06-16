@@ -149,39 +149,59 @@ const Quizzes = () => {
 
               {/* Options */}
               <div className="space-y-3 mb-8">
-                {activeQuiz.questions[currentQuestionIdx]?.options.map((opt) => {
-                  const qId = activeQuiz.questions[currentQuestionIdx].id
-                  const isSelected = selectedAnswers[qId] === opt
-                  const correctOpt = activeQuiz.questions[currentQuestionIdx].correct
-                  const isCorrectAnswer = opt === correctOpt
-                  
-                  // Style modifiers for graded quiz state
-                  let optionStyle = "border-brand-border bg-brand-bg/40 text-gray-300 hover:border-gray-600 hover:text-white"
-                  if (isSelected) optionStyle = "border-brand-primary bg-brand-primary/10 text-white"
-                  
-                  if (quizResult) {
-                    if (isCorrectAnswer) {
-                      optionStyle = "border-green-500 bg-green-500/10 text-green-300"
-                    } else if (isSelected && !isCorrectAnswer) {
-                      optionStyle = "border-red-500 bg-red-500/10 text-red-300"
-                    } else {
-                      optionStyle = "border-brand-border/40 bg-brand-bg/10 text-gray-600 cursor-not-allowed"
+                {activeQuiz.questions[currentQuestionIdx]?.options ? (
+                  activeQuiz.questions[currentQuestionIdx].options.map((opt) => {
+                    const qId = activeQuiz.questions[currentQuestionIdx].id
+                    const isSelected = selectedAnswers[qId] === opt
+                    const correctOpt = activeQuiz.questions[currentQuestionIdx].correct
+                    const isCorrectAnswer = opt === correctOpt
+                    
+                    // Style modifiers for graded quiz state
+                    let optionStyle = "border-brand-border bg-brand-bg/40 text-gray-300 hover:border-gray-600 hover:text-white"
+                    if (isSelected) optionStyle = "border-brand-primary bg-brand-primary/10 text-white"
+                    
+                    if (quizResult) {
+                      if (isCorrectAnswer) {
+                        optionStyle = "border-green-500 bg-green-500/10 text-green-300"
+                      } else if (isSelected && !isCorrectAnswer) {
+                        optionStyle = "border-red-500 bg-red-500/10 text-red-300"
+                      } else {
+                        optionStyle = "border-brand-border/40 bg-brand-bg/10 text-gray-600 cursor-not-allowed"
+                      }
                     }
-                  }
 
-                  return (
-                    <button
-                      key={opt}
-                      onClick={() => handleSelectOption(qId, opt)}
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => handleSelectOption(qId, opt)}
+                        disabled={!!quizResult}
+                        className={`w-full flex items-center justify-between p-4 rounded-xl border text-left text-sm cursor-pointer transition-all ${optionStyle}`}
+                      >
+                        <span>{opt}</span>
+                        {quizResult && isCorrectAnswer && <Check size={16} className="text-green-500" />}
+                        {quizResult && isSelected && !isCorrectAnswer && <X size={16} className="text-red-500" />}
+                      </button>
+                    )
+                  })
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                      Write your answer
+                    </label>
+                    <textarea
                       disabled={!!quizResult}
-                      className={`w-full flex items-center justify-between p-4 rounded-xl border text-left text-sm cursor-pointer transition-all ${optionStyle}`}
-                    >
-                      <span>{opt}</span>
-                      {quizResult && isCorrectAnswer && <Check size={16} className="text-green-500" />}
-                      {quizResult && isSelected && !isCorrectAnswer && <X size={16} className="text-red-500" />}
-                    </button>
-                  )
-                })}
+                      value={selectedAnswers[activeQuiz.questions[currentQuestionIdx].id] || ''}
+                      onChange={(e) => handleSelectOption(activeQuiz.questions[currentQuestionIdx].id, e.target.value)}
+                      placeholder="Type your explanation or short answer here..."
+                      className="w-full bg-brand-bg border border-brand-border text-white text-xs px-3.5 py-2.5 rounded-xl outline-none focus:border-brand-primary resize-none h-24"
+                    />
+                    {quizResult && (
+                      <div className="text-xs text-brand-primary mt-2">
+                        Correct Answer Guide: <span className="text-gray-300">{activeQuiz.questions[currentQuestionIdx].correct}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* AI Explanation Drawer / Box (Component 10 detail) */}
@@ -273,9 +293,9 @@ const Quizzes = () => {
                         key={diff}
                         type="button"
                         onClick={() => setDifficulty(diff)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize cursor-pointer transition-all ${
+                        className={`flex-1 py-2.5 rounded-lg text-xs font-medium capitalize cursor-pointer transition-all ${
                           difficulty === diff 
-                            ? 'bg-brand-primary text-white' 
+                            ? 'bg-brand-primary text-white shadow' 
                             : 'text-gray-400 hover:text-white'
                         }`}
                       >

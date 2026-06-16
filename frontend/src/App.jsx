@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ChatProvider } from './context/ChatContext'
@@ -24,11 +24,13 @@ import Analytics from './pages/Analytics'
 
 // Layout wrapper for Protected App views
 const AppLayout = () => {
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-brand-bg text-gray-100">
-      <Sidebar />
+      <Sidebar mobileOpen={sidebarMobileOpen} onClose={() => setSidebarMobileOpen(false)} />
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        <TopNavbar />
+        <TopNavbar onToggleSidebar={() => setSidebarMobileOpen(prev => !prev)} />
         <main className="flex-1 overflow-y-auto bg-brand-bg">
           <Routes>
             <Route path="/" element={<Navigate to="/chat" replace />} />

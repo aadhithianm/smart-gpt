@@ -155,22 +155,23 @@ async def submit_quiz_attempt(
     )
     # Since postgres triggers or updates are cleaner, we execute ORM values update or handle it directly
     try:
-        stats_query = select(LearningStats).where(
-            LearningStats.user_id == user_id,
-            LearningStats.subject == quiz.subject
-        )
-        stats = (await db.execute(stats_query)).scalar_one_or_none()
-        if stats:
-            stats.quizzes_completed += 1
-            stats.accuracy = int(((stats.accuracy * (stats.quizzes_completed - 1)) + score_pct) / stats.quizzes_completed)
-        else:
-            new_stats = LearningStats(
-                user_id=user_id,
-                subject=quiz.subject,
-                quizzes_completed=1,
-                accuracy=score_pct
+        async with db.begin_nested():
+            stats_query = select(LearningStats).where(
+                LearningStats.user_id == user_id,
+                LearningStats.subject == quiz.subject
             )
-            db.add(new_stats)
+            stats = (await db.execute(stats_query)).scalar_one_or_none()
+            if stats:
+                stats.quizzes_completed += 1
+                stats.accuracy = int(((stats.accuracy * (stats.quizzes_completed - 1)) + score_pct) / stats.quizzes_completed)
+            else:
+                new_stats = LearningStats(
+                    user_id=user_id,
+                    subject=quiz.subject,
+                    quizzes_completed=1,
+                    accuracy=score_pct
+                )
+                db.add(new_stats)
     except Exception as e:
         print(f"Warning: Failed to update learning stats: {str(e)}")
 

@@ -179,7 +179,7 @@ const Flashcards = () => {
                   {/* Flipping Box Card wrapper */}
                   <div 
                     onClick={() => setFlipped(!flipped)}
-                    className="w-full max-w-md h-64 cursor-pointer relative perspective-1000"
+                    className="w-full max-w-[90vw] sm:max-w-md h-64 cursor-pointer relative perspective-1000"
                   >
                     <motion.div
                       animate={{ rotateY: flipped ? 180 : 0 }}
@@ -190,7 +190,7 @@ const Flashcards = () => {
                       {/* Front text panel */}
                       <div 
                         style={{ backfaceVisibility: 'hidden' }}
-                        className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 text-center rounded-2xl bg-brand-bg/50 ${flipped ? 'pointer-events-none' : ''}`}
+                        className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 overflow-y-auto text-center rounded-2xl bg-brand-bg/50 ${flipped ? 'pointer-events-none' : ''}`}
                       >
                         <HelpCircle size={32} className="text-brand-primary/40 mb-4" />
                         <p className="text-white text-base font-semibold leading-relaxed">
@@ -208,10 +208,10 @@ const Flashcards = () => {
                           backfaceVisibility: 'hidden',
                           transform: 'rotateY(180deg)'
                         }}
-                        className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 text-center rounded-2xl bg-brand-surface ${!flipped ? 'pointer-events-none' : ''}`}
+                        className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center p-6 overflow-y-auto text-center rounded-2xl bg-brand-surface ${!flipped ? 'pointer-events-none' : ''}`}
                       >
                         <Check size={32} className="text-green-500/40 mb-4" />
-                        <p className="text-gray-200 text-sm leading-relaxed">
+                        <p className="text-gray-200 text-sm leading-relaxed mb-6">
                           {activeCard?.back}
                         </p>
                         <span className="absolute bottom-4 text-[10px] text-gray-500 font-medium">

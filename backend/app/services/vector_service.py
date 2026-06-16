@@ -100,7 +100,6 @@ class VectorService:
                 db_chunk = DocumentChunk(
                     document_id=document_id,
                     workspace_id=workspace_id,
-                    user_id=user_id,
                     chunk_index=chunk["chunk_index"],
                     page_number=chunk["page_number"],
                     content=chunk["content"],

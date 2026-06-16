@@ -33,10 +33,26 @@ class StudyPlanService:
         """
         context_blocks = []
         if document_ids:
-            query = select(DocumentChunk.content).where(DocumentChunk.document_id.in_(document_ids))
+            from app.db.models import Document
+            query = (
+                select(DocumentChunk.content)
+                .join(Document, DocumentChunk.document_id == Document.id)
+                .where(
+                    DocumentChunk.document_id.in_(document_ids),
+                    Document.workspace_id == workspace_id
+                )
+                .order_by(DocumentChunk.document_id, DocumentChunk.chunk_index)
+            )
             result = await db.execute(query)
             chunks = result.scalars().all()
-            context_blocks = chunks[:15] # Cap context
+            
+            # Uniformly sample chunks to get a representative summary of the documents
+            cap = 15
+            if len(chunks) > cap:
+                step = len(chunks) / cap
+                context_blocks = [chunks[int(i * step)] for i in range(cap)]
+            else:
+                context_blocks = list(chunks)
 
         # 2. Formulate prompt instructing Pro to design calendar
         prompt = (

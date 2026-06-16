@@ -52,3 +52,14 @@ body {
   box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
   border-color: rgba(59, 130, 246, 0.6);
 }
+
+/* 3D Card Flipper Perspective */
+.perspective-1000 {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+/* Touch momentum scrolling for mobile viewports */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+}

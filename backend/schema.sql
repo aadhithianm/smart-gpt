@@ -246,10 +246,31 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Policies
-CREATE POLICY user_profile_all ON public.users FOR ALL USING (auth.uid() = id);
+CREATE OR REPLACE FUNCTION public.share_workspace(u_id1 uuid, u_id2 uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.workspace_members wm1
+    JOIN public.workspace_members wm2 ON wm1.workspace_id = wm2.workspace_id
+    WHERE wm1.user_id = u_id1 AND wm2.user_id = u_id2
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE POLICY ws_all ON public.workspaces FOR ALL 
+-- Policies
+CREATE POLICY user_profile_all ON public.users FOR ALL 
+    USING (auth.uid() = id OR public.share_workspace(auth.uid(), id));
+
+CREATE POLICY ws_select ON public.workspaces FOR SELECT 
+    USING (is_workspace_member(id, auth.uid()));
+
+CREATE POLICY ws_insert ON public.workspaces FOR INSERT 
+    WITH CHECK (auth.uid() = created_by);
+
+CREATE POLICY ws_update ON public.workspaces FOR UPDATE 
+    USING (is_workspace_member(id, auth.uid()));
+
+CREATE POLICY ws_delete ON public.workspaces FOR DELETE 
     USING (is_workspace_member(id, auth.uid()));
 
 CREATE POLICY wm_all ON public.workspace_members FOR ALL 

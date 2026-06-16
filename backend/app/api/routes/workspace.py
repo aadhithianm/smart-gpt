@@ -130,3 +130,85 @@ async def list_workspace_members(
         select(WorkspaceMember).where(WorkspaceMember.workspace_id == workspace_id)
     )).scalars().all()
     return members
+
+@router.put("/{workspace_id}", response_model=WorkspaceOut)
+async def update_workspace(
+    workspace_id: UUID,
+    payload: WorkspaceCreate,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Renames a workspace. Only workspace owners or admins are allowed to do this.
+    """
+    user_id = UUID(current_user["id"])
+    
+    # Check if workspace exists
+    workspace = (await db.execute(
+        select(Workspace).where(Workspace.id == workspace_id)
+    )).scalar_one_or_none()
+    
+    if not workspace:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workspace not found"
+        )
+        
+    # Check authorization (owner or admin)
+    membership = (await db.execute(
+        select(WorkspaceMember).where(
+            WorkspaceMember.workspace_id == workspace_id,
+            WorkspaceMember.user_id == user_id
+        )
+    )).scalar_one_or_none()
+    
+    if not membership or membership.role not in ["owner", "admin"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only workspace owners or admins can rename a workspace"
+        )
+        
+    workspace.name = payload.name
+    await db.commit()
+    await db.refresh(workspace)
+    return workspace
+
+@router.delete("/{workspace_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_workspace_route(
+    workspace_id: UUID,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Deletes a workspace. Only the workspace owner is allowed to do this.
+    """
+    user_id = UUID(current_user["id"])
+    
+    # Check if workspace exists
+    workspace = (await db.execute(
+        select(Workspace).where(Workspace.id == workspace_id)
+    )).scalar_one_or_none()
+    
+    if not workspace:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workspace not found"
+        )
+        
+    # Check authorization (must be owner)
+    membership = (await db.execute(
+        select(WorkspaceMember).where(
+            WorkspaceMember.workspace_id == workspace_id,
+            WorkspaceMember.user_id == user_id
+        )
+    )).scalar_one_or_none()
+    
+    if not membership or membership.role != "owner":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the workspace owner can delete a workspace"
+        )
+        
+    await db.delete(workspace)
+    await db.commit()
+    return None

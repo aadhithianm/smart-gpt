@@ -30,23 +30,7 @@ class AIService:
         # 1. Generate Query Vector
         query_vector = await VectorService.generate_embedding(query)
         
-        # 2. Invoke match function using raw SQL select (since pgvector Cosine similarity matches are custom functions)
-        sql = """
-            SELECT id, document_id, content, page_number, similarity 
-            FROM match_workspace_document_chunks(:embedding, :threshold, :limit, :ws_id)
-        """
-        result = await db.execute(
-            select(
-                DocumentChunk.id,
-                DocumentChunk.document_id,
-                DocumentChunk.content,
-                DocumentChunk.page_number
-            ).from_statement(
-                # Use execute with parameter binding
-                select(DocumentChunk) # placeholder ORM select
-            ),
-            # We will use raw SQL directly to avoid ORM mappings mismatch on similarity metric column
-        )
+        # 2. Safe raw SQL execute:
         
         # Safe raw SQL execute:
         from sqlalchemy import text
@@ -88,35 +72,47 @@ class AIService:
         session_id: UUID,
         user_query: str,
         workspace_id: UUID,
-        db: AsyncSession
+        db: AsyncSession = None
     ) -> AsyncGenerator[str, None]:
         """
         Orchestrates RAG context, calls Gemini model, streams responses via SSE, 
         and updates session logs.
         """
-        # 1. Get Chat Session parameters
-        session_query = select(ChatSession).where(ChatSession.id == session_id)
-        session = (await db.execute(session_query)).scalar_one()
-        
-        search_mode = session.search_mode
-        enable_grounding = search_mode in ["web", "hybrid"]
-        use_materials = search_mode in ["materials", "hybrid"]
-        
-        citations = []
-        context_blocks = []
-        
-        # 2. RAG Context Retrieval
-        if use_materials:
-            try:
-                citations = await cls.search_citations(user_query, workspace_id, db)
-                for idx, cite in enumerate(citations):
-                    context_blocks.append(
-                        f"Source [{idx + 1}] (File: {cite['file_name']}, Page: {cite['page_number']}):\n{cite['content']}\n"
-                    )
-            except Exception as e:
-                print(f"Warning: RAG search citation retrieval failed: {str(e)}")
+        from app.db.database import async_session_local
 
-        # 3. Construct Context Prompt
+        # 1. Open database session to read session details and execute RAG search
+        async with async_session_local() as local_db:
+            # Get Chat Session parameters
+            session_query = select(ChatSession).where(ChatSession.id == session_id)
+            session = (await local_db.execute(session_query)).scalar_one()
+            
+            search_mode = session.search_mode
+            enable_grounding = search_mode in ["web", "hybrid"]
+            use_materials = search_mode in ["materials", "hybrid"]
+            
+            citations = []
+            context_blocks = []
+            
+            # 2. RAG Context Retrieval
+            if use_materials:
+                try:
+                    citations = await cls.search_citations(user_query, workspace_id, local_db)
+                    for idx, cite in enumerate(citations):
+                        context_blocks.append(
+                            f"Source [{idx + 1}] (File: {cite['file_name']}, Page: {cite['page_number']}):\n{cite['content']}\n"
+                        )
+                except Exception as e:
+                    print(f"Warning: RAG search citation retrieval failed: {str(e)}")
+
+            # 3. Save User Message
+            user_message = Message(session_id=session_id, role="user", content=user_query)
+            local_db.add(user_message)
+            await local_db.commit()
+
+        # Database session is now closed and connection released back to pool
+        # during the slow Gemini API streaming network call.
+
+        # 4. Construct Context Prompt
         system_instruction = (
             "You are StudyGPT, a staff study assistant. "
             "Explain concepts clearly, formatting with clean markdown, equations using LaTeX math signs, and code using code fences. "
@@ -140,11 +136,6 @@ class AIService:
             prompt += "Here are the relevant study materials context:\n---\n" + "\n".join(context_blocks) + "\n---\n"
             
         prompt += f"User query: {user_query}\n"
-
-        # 4. Save User Message
-        user_message = Message(session_id=session_id, role="user", content=user_query)
-        db.add(user_message)
-        await db.flush()
 
         # 5. Yield Citations Event
         yield f"event: citations\ndata: {json.dumps(citations)}\n\n"
@@ -172,7 +163,7 @@ class AIService:
             async for chunk in response:
                 chunk_text = chunk.text or ""
                 assistant_reply_text += chunk_text
-                # SSE Event stream format
+                # SSE Event stream stream format
                 yield f"event: token\ndata: {json.dumps({'text': chunk_text})}\n\n"
                 
         except Exception as e:
@@ -180,22 +171,24 @@ class AIService:
             print(f"Error in Gemini streaming generation: {str(e)}")
             return
 
-        # 7. Save Assistant Message & Citations Log
-        assistant_message = Message(session_id=session_id, role="assistant", content=assistant_reply_text)
-        db.add(assistant_message)
-        await db.flush()
+        # 7. Open a new database session to save Assistant Message & Citations Log
+        async with async_session_local() as local_db:
+            assistant_message = Message(session_id=session_id, role="assistant", content=assistant_reply_text)
+            local_db.add(assistant_message)
+            await local_db.flush()
 
-        # Save citations relation log
-        for cite in citations:
-            source = MessageSource(
-                message_id=assistant_message.id,
-                source_type="file",
-                source_name=cite["file_name"],
-                chunk_id=cite["chunk_id"],
-                page_number=cite["page_number"],
-                snippet=cite["content"][:200]
-            )
-            db.add(source)
+            # Save citations relation log
+            for cite in citations:
+                source = MessageSource(
+                    message_id=assistant_message.id,
+                    source_type="file",
+                    source_name=cite["file_name"],
+                    chunk_id=cite["chunk_id"],
+                    page_number=cite["page_number"],
+                    snippet=cite["content"][:200]
+                )
+                local_db.add(source)
 
-        await db.commit()
+            await local_db.commit()
+            
         yield "event: done\ndata: {}\n\n"

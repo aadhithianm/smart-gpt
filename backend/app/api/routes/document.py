@@ -101,13 +101,17 @@ async def upload_document(
             detail=f"Unsupported file format. Supported types: {', '.join(ALLOWED_EXTENSIONS)}"
         )
         
-    # Read file content safely
-    contents = await file.read()
-    if len(contents) > MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File exceeds maximum size of 25MB"
-        )
+    # Read file content safely in chunks to prevent memory exhaustion (OOM)
+    contents = bytearray()
+    chunk_size = 64 * 1024
+    while chunk := await file.read(chunk_size):
+        contents.extend(chunk)
+        if len(contents) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File exceeds maximum size of 25MB"
+            )
+    contents = bytes(contents)
         
     # 3. Create document record in database
     document_id = UUID(int=0) # Temp placeholder placeholder

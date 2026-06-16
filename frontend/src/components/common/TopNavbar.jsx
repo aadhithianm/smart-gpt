@@ -9,11 +9,12 @@ import {
   Plus, 
   LogOut, 
   User as UserIcon,
-  Check
+  Check,
+  Menu
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const TopNavbar = () => {
+const TopNavbar = ({ onToggleSidebar }) => {
   const { 
     workspaces, 
     currentWorkspace, 
@@ -52,7 +53,16 @@ const TopNavbar = () => {
     <header className="h-16 border-b border-brand-border/40 bg-brand-surface/50 backdrop-blur flex items-center justify-between px-6 select-none relative z-40">
       
       {/* Left: Workspace Selector */}
-      <div className="relative">
+      <div className="flex items-center space-x-3">
+        <button
+          onClick={onToggleSidebar}
+          className="md:hidden p-2 text-gray-400 hover:text-white hover:bg-brand-border/40 rounded-xl cursor-pointer transition-colors"
+          title="Open Menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        <div className="relative">
         <button
           onClick={() => setWsDropdownOpen(!wsDropdownOpen)}
           className="flex items-center space-x-2 bg-brand-border/30 hover:bg-brand-border/60 text-white font-medium py-1.5 px-3 rounded-xl cursor-pointer border border-brand-border transition-colors text-sm"
@@ -134,6 +144,7 @@ const TopNavbar = () => {
             </motion.div>
           )}
         </AnimatePresence>
+      </div>
       </div>
 
       {/* Middle: Search Mode Selector (Component 12) */}

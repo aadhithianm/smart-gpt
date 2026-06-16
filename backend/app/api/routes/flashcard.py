@@ -148,29 +148,30 @@ async def submit_card_review(
     
     # Update global user learning statistics hours studied
     try:
-        from app.db.models import LearningStats, Flashcard
-        # Fetch subject from deck
-        card_query = select(Flashcard).where(Flashcard.id == payload.flashcard_id)
-        card = (await db.execute(card_query)).scalar_one()
-        
-        deck_query = select(FlashcardDeck).where(FlashcardDeck.id == card.deck_id)
-        deck = (await db.execute(deck_query)).scalar_one()
-        
-        stats_query = select(LearningStats).where(
-            LearningStats.user_id == user_id,
-            LearningStats.subject == deck.subject
-        )
-        stats = (await db.execute(stats_query)).scalar_one_or_none()
-        if stats:
-            # Add estimated active review study hours
-            stats.hours_studied = float(stats.hours_studied) + 0.05 # 3 minutes per review estimate
-        else:
-            new_stats = LearningStats(
-                user_id=user_id,
-                subject=deck.subject,
-                hours_studied=0.05
+        async with db.begin_nested():
+            from app.db.models import LearningStats, Flashcard
+            # Fetch subject from deck
+            card_query = select(Flashcard).where(Flashcard.id == payload.flashcard_id)
+            card = (await db.execute(card_query)).scalar_one()
+            
+            deck_query = select(FlashcardDeck).where(FlashcardDeck.id == card.deck_id)
+            deck = (await db.execute(deck_query)).scalar_one()
+            
+            stats_query = select(LearningStats).where(
+                LearningStats.user_id == user_id,
+                LearningStats.subject == deck.subject
             )
-            db.add(new_stats)
+            stats = (await db.execute(stats_query)).scalar_one_or_none()
+            if stats:
+                # Add estimated active review study hours
+                stats.hours_studied = float(stats.hours_studied) + 0.05 # 3 minutes per review estimate
+            else:
+                new_stats = LearningStats(
+                    user_id=user_id,
+                    subject=deck.subject,
+                    hours_studied=0.05
+                )
+                db.add(new_stats)
     except Exception as e:
         print(f"Warning: Failed to update reviews study stats: {str(e)}")
 

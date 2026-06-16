@@ -30,9 +30,12 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     if (currentWorkspace) {
       fetchSessions()
+      setCurrentSession(null)
+      setMessages([])
     } else {
       setSessions([])
       setCurrentSession(null)
+      setMessages([])
     }
   }, [currentWorkspace])
 

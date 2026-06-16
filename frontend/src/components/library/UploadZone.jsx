@@ -26,6 +26,12 @@ const UploadZone = ({ onUploadSuccess }) => {
       setError("Please select or create a workspace first")
       return
     }
+    // Client-side file size validation (Max 25MB)
+    const MAX_FILE_SIZE = 25 * 1024 * 1024
+    if (file.size > MAX_FILE_SIZE) {
+      setError("File exceeds maximum size of 25MB")
+      return
+    }
     setError(null)
     setUploading(true)
     
