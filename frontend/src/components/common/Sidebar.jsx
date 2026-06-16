@@ -14,7 +14,8 @@ import {
   ChevronRight,
   LogOut,
   Trash2,
-  Sparkles
+  Sparkles,
+  Settings as SettingsIcon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -31,7 +32,8 @@ const Sidebar = ({ mobileOpen, onClose }) => {
     { name: 'Flashcards', path: '/flashcards', icon: GraduationCap },
     { name: 'Quizzes', path: '/quizzes', icon: FileQuestion },
     { name: 'Plans', path: '/plans', icon: Calendar },
-    { name: 'Analytics', path: '/analytics', icon: BarChart3 }
+    { name: 'Analytics', path: '/analytics', icon: BarChart3 },
+    { name: 'Settings', path: '/settings', icon: SettingsIcon }
   ]
 
   const handleNewChat = async () => {

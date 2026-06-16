@@ -5,6 +5,42 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "vector";
 
+-- =======================================================
+-- RESET DATABASE (DROP ALL EXISTING OBJECTS)
+-- =======================================================
+
+-- Drop triggers
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+DROP TRIGGER IF EXISTS on_workspace_created ON public.workspaces;
+
+-- Drop tables
+DROP TABLE IF EXISTS public.usage_logs CASCADE;
+DROP TABLE IF EXISTS public.prompt_templates CASCADE;
+DROP TABLE IF EXISTS public.learning_stats CASCADE;
+DROP TABLE IF EXISTS public.study_plans CASCADE;
+DROP TABLE IF EXISTS public.flashcard_reviews CASCADE;
+DROP TABLE IF EXISTS public.flashcards CASCADE;
+DROP TABLE IF EXISTS public.flashcard_decks CASCADE;
+DROP TABLE IF EXISTS public.quiz_attempts CASCADE;
+DROP TABLE IF EXISTS public.quizzes CASCADE;
+DROP TABLE IF EXISTS public.message_sources CASCADE;
+DROP TABLE IF EXISTS public.messages CASCADE;
+DROP TABLE IF EXISTS public.chat_sessions CASCADE;
+DROP TABLE IF EXISTS public.document_chunks CASCADE;
+DROP TABLE IF EXISTS public.documents CASCADE;
+DROP TABLE IF EXISTS public.workspace_members CASCADE;
+DROP TABLE IF EXISTS public.workspaces CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+
+-- Drop functions
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_new_workspace() CASCADE;
+DROP FUNCTION IF EXISTS public.handle_update_user() CASCADE;
+DROP FUNCTION IF EXISTS public.is_workspace_member(uuid, uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.share_workspace(uuid, uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.match_workspace_document_chunks(vector, float, int, uuid) CASCADE;
+
 -- 1. USERS PROFILE TABLE
 -- Extends Supabase auth.users
 CREATE TABLE IF NOT EXISTS public.users (
@@ -391,3 +427,22 @@ DROP TRIGGER IF EXISTS on_workspace_created ON public.workspaces;
 CREATE TRIGGER on_workspace_created
   AFTER INSERT ON public.workspaces
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_workspace();
+
+-- Trigger to sync updated auth.users with public.users
+CREATE OR REPLACE FUNCTION public.handle_update_user()
+RETURNS trigger AS $$
+BEGIN
+  UPDATE public.users
+  SET 
+    full_name = new.raw_user_meta_data->>'full_name',
+    avatar_url = new.raw_user_meta_data->>'avatar_url',
+    updated_at = timezone('utc'::text, now())
+  WHERE id = new.id;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_updated ON auth.users;
+CREATE TRIGGER on_auth_user_updated
+  AFTER UPDATE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_update_user();

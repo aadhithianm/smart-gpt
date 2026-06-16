@@ -64,6 +64,34 @@ export const ChatProvider = ({ children }) => {
     }
   }
 
+  const updateWorkspace = async (workspaceId, name) => {
+    try {
+      const res = await api.put(`/workspaces/${workspaceId}`, { name })
+      setWorkspaces(prev => prev.map(ws => ws.id === workspaceId ? res.data : ws))
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspace(res.data)
+      }
+      return res.data
+    } catch (err) {
+      console.error("Error updating workspace:", err)
+      throw err
+    }
+  }
+
+  const deleteWorkspace = async (workspaceId) => {
+    try {
+      await api.delete(`/workspaces/${workspaceId}`)
+      const remaining = workspaces.filter(ws => ws.id !== workspaceId)
+      setWorkspaces(remaining)
+      if (currentWorkspace?.id === workspaceId) {
+        setCurrentWorkspace(remaining.length > 0 ? remaining[0] : null)
+      }
+    } catch (err) {
+      console.error("Error deleting workspace:", err)
+      throw err
+    }
+  }
+
   const fetchSessions = async () => {
     if (!currentWorkspace) return
     try {
@@ -124,6 +152,8 @@ export const ChatProvider = ({ children }) => {
         currentWorkspace,
         setCurrentWorkspace,
         createWorkspace,
+        updateWorkspace,
+        deleteWorkspace,
         fetchWorkspaces,
         sessions,
         currentSession,

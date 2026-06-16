@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ChatProvider } from './context/ChatContext'
@@ -21,10 +21,18 @@ import Flashcards from './pages/Flashcards'
 
 // Page Stubs (We'll implement detailed versions next)
 import Analytics from './pages/Analytics'
+import Settings from './pages/Settings'
 
 // Layout wrapper for Protected App views
 const AppLayout = () => {
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
+
+  useEffect(() => {
+    const savedAccent = localStorage.getItem('theme-accent')
+    if (savedAccent) {
+      document.documentElement.style.setProperty('--color-brand-primary', savedAccent)
+    }
+  }, [])
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-brand-bg text-gray-100">
@@ -41,6 +49,7 @@ const AppLayout = () => {
             <Route path="/quizzes" element={<Quizzes />} />
             <Route path="/plans" element={<StudyPlans />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/chat" replace />} />
           </Routes>
         </main>

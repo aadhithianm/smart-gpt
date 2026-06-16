@@ -45,5 +45,4 @@ lerna-debug.log*
 .DS_Store
 
 # Build/Semantic Graph outputs (if temporary)
-# graphify-out/
-/graphify-out
+graphify-out/

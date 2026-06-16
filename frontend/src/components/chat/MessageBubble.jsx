@@ -113,9 +113,11 @@ const CodeBlock = ({ language, value }) => {
 
 const MessageBubble = ({ message, onCitationClick }) => {
   const isUser = message.role === 'user'
+  const density = localStorage.getItem('chat-density') || 'spacious'
+  const isCompact = density === 'compact'
 
   return (
-    <div className={`flex w-full space-x-3 my-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex w-full space-x-3 ${isCompact ? 'my-2' : 'my-4'} ${isUser ? 'justify-end' : 'justify-start'}`}>
       
       {/* Avatar */}
       {!isUser && (
@@ -125,14 +127,16 @@ const MessageBubble = ({ message, onCitationClick }) => {
       )}
 
       {/* Bubble Container */}
-      <div className={`max-w-[85%] rounded-2xl p-4 shadow-md border transition-all duration-300 hover:shadow-lg ${
+      <div className={`max-w-[85%] rounded-2xl shadow-md border transition-all duration-300 hover:shadow-lg ${
+        isCompact ? 'p-2.5' : 'p-4'
+      } ${
         isUser 
           ? 'bg-brand-primary border-brand-primary/20 text-white rounded-tr-none' 
           : 'bg-brand-surface border-brand-border text-gray-200 rounded-tl-none'
       }`}>
         
         {/* Text Content */}
-        <div className="text-sm leading-relaxed overflow-x-auto">
+        <div className={`${isCompact ? 'text-xs' : 'text-sm'} leading-relaxed overflow-x-auto`}>
           {isUser ? (
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
