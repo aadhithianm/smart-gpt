@@ -3,10 +3,14 @@ from fastapi import HTTPException, Security, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from app.core.config import settings
 from typing import Dict, Any
+from app.db.database import async_session_local
+from app.db.models import User, Workspace
+from sqlalchemy.future import select
+from uuid import UUID
 
 security_bearer = HTTPBearer()
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security_bearer)) -> Dict[str, Any]:
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security_bearer)) -> Dict[str, Any]:
     """
     Decodes and validates the Supabase Auth JWT token from the Authorization header.
     Supports both legacy symmetric (HS256) and modern asymmetric (ES256/RS256) algorithms.
@@ -43,9 +47,36 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
                 audience="authenticated"
             )
 
+        user_id = payload.get("sub")
+        email = payload.get("email")
+
+        # Lazy sync user if missing in public.users (e.g. after schema reset)
+        async with async_session_local() as db:
+            user_exists = (await db.execute(
+                select(User).where(User.id == UUID(user_id))
+            )).scalar_one_or_none()
+            
+            if not user_exists:
+                metadata = payload.get("user_metadata", {}) or {}
+                new_user = User(
+                    id=UUID(user_id),
+                    email=email,
+                    full_name=metadata.get("full_name"),
+                    avatar_url=metadata.get("avatar_url")
+                )
+                db.add(new_user)
+                
+                # Create default workspace (database trigger automatically handles workspace membership)
+                personal_ws = Workspace(
+                    name="Personal Workspace",
+                    created_by=UUID(user_id)
+                )
+                db.add(personal_ws)
+                await db.commit()
+
         return {
-            "id": payload.get("sub"),
-            "email": payload.get("email"),
+            "id": user_id,
+            "email": email,
             "role": payload.get("role")
         }
     except jwt.ExpiredSignatureError:
